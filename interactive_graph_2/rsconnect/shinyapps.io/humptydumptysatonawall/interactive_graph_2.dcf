@@ -1,0 +1,12 @@
+name: interactive_graph_2
+title: interactive_graph_2
+username:
+account: humptydumptysatonawall
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3206555
+bundleId: 3849965
+url: https://humptydumptysatonawall.shinyapps.io/interactive_graph_2/
+when: 1605148953.29871
+asMultiple: FALSE
+asStatic: FALSE
