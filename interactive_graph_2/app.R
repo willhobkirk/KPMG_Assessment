@@ -7,19 +7,23 @@
 #    http://shiny.rstudio.com/
 #
 
+# library setup
 library(shiny)
 library(tidyverse)
 library(htmlTable)
 library(DT)
 
+# reading in data and keeping only the training assigned portion
 df_raw = readr::read_tsv("housing-prices-ge19.txt") %>% janitor::clean_names()
 df = filter(df_raw,test==0)
 
-
+# taking a logarithm of price to improve normality
 df_log = df %>%
   mutate(log_price = log(price))
 df_log = subset(df_log, select = -c(price))
 
+# training linear models with the variables found based on Akaike Information Criterion
+# and backward stepwise selection with the F-test (in another document)
 lm3 = lm(log_price ~  living_area + bathrooms + land_value, df_log)
 lm_aic = lm(log_price ~ living_area + land_value + bathrooms + fuel_type + waterfront + age + new_construct + 
   lot_size + central_air + rooms + pct_college, df_log)
@@ -33,14 +37,17 @@ ui <- fluidPage(
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
+          
+          # initialising controls for the app
             radioButtons("model_choice","Select a Model: ",choiceNames = c("Three Variable","AIC Selected"),choiceValues = c("three","aic")),
             checkboxInput("prediction","Prediction Interval"),
             checkboxInput("confidence","Confidence Interval"),
             numericInput("level","Prediction/Confidence Level",min=0.1,max=0.99,value = 0.9),
             numericInput("living_area","Living Area (square feet)",value =1753,min=500,max=10000),
-            #numericInput("bedrooms","Number of Bedrooms",value=3,min=1,max=10),
             numericInput("bathrooms","Number of Bathrooms",value =2,min=0,max=10,step=0.5),
             numericInput("land_value","Value of Land ($USD)",value =34536,min=100,max=1000000),
+            
+            # set of controls that are only relevant if the AIC model is selected
             conditionalPanel(condition = "input.model_choice == 'aic'",
                              
                              numericInput("rooms","Number of Rooms",value=7,min=1,max=15),
@@ -68,8 +75,10 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram
 server <- function(input, output) {
 
+    # output results table rendering
     output$plotout <- DT::renderDataTable ({
-        # generate bins based on input$bins from ui.R
+      
+        # sets up the dataframe for our model training with only the necessary variables
         new_df = data.frame(living_area=input$living_area, 
                             land_value= input$land_value, 
                             bathrooms=input$bathrooms,
@@ -81,6 +90,8 @@ server <- function(input, output) {
                             central_air = 1*input$central_air,
                             rooms= input$rooms,
                             pct_college = input$pct_college)
+        
+        # determines our model based on selection in the ui
         if(input$model_choice == "three"){
           model = lm3
         }
@@ -88,6 +99,7 @@ server <- function(input, output) {
           model = lm_aic
         }
         
+        # determines prediction, prediction interval and  confidence interval
         pred = predict(model,new_df,interval="prediction",level=input$level)
         conf = predict(model,new_df,interval="confidence",level=input$level)
         lwrP = exp(pred[,2])
@@ -95,8 +107,8 @@ server <- function(input, output) {
         uprP = exp(pred[,3])
         uprC = exp(conf[,3])
         fit = exp(pred[,1])
-       # paste("Lower: ",round(lwr),"\nUpper: ",round(upr),"\nFit: ",round(fit))
-        
+       
+        # creates the result dataframe for display
         result = data.frame(Prediction = paste("$",as.integer(round(fit))))
         if(input$prediction){
           result = result %>% mutate("Lower Prediction Bound" = paste("$",as.integer(round(lwrP))),"Upper Prediction Bound"=paste("$",as.integer(round(uprP))))
@@ -107,8 +119,11 @@ server <- function(input, output) {
         result
         
     })
+    
+    # creates our key plot
     output$plotout2 <- renderPlot({
       
+      # initialises the dataset dataframe in the new control structure
       new_df = data.frame(living_area=input$living_area, 
                           land_value= input$land_value, 
                           bathrooms=input$bathrooms,
@@ -120,6 +135,8 @@ server <- function(input, output) {
                           central_air = 1*input$central_air,
                           rooms= input$rooms,
                           pct_college = input$pct_college)
+      
+      # model choice
       if(input$model_choice == "three"){
         model = lm3
       }
@@ -127,6 +144,7 @@ server <- function(input, output) {
         model = lm_aic
       }
       
+      # prediction interval determination
       pred = predict(model,new_df,interval="prediction",level=input$level)
       conf = predict(model,new_df,interval="confidence",level=input$level)
       lwrP = exp(pred[,2])
@@ -135,6 +153,7 @@ server <- function(input, output) {
       uprC = exp(conf[,3])
       fit = exp(pred[,1])
       
+      # creates a histogram with the intervals and predicion overlaid onto it
       df %>% ggplot(aes(x=price))+
         geom_histogram(fill = "burlywood", alpha = 0.5)+
         geom_vline(xintercept = lwrP,color = "red")+
