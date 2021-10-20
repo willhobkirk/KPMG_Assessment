@@ -6,3 +6,5 @@ making SQL queries from inside a python notebook. Some visualisations are includ
 then be used, but are not a final answer to the driving question (they are missing some details like axes labels that make them inappropriate for a final report).
 
 This code will not run as USYD Data Science has shut down their SQL servers since I wrote this code last semester.
+
+I have also included an interactive web app I made for another subject. The app code is in the file 'app.R' within the interactive graph 2 folder. The web app can be run on https://humptydumptysatonawall.shinyapps.io/interactive_graph_2/
