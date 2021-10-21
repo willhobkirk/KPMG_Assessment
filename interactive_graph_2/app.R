@@ -78,7 +78,7 @@ server <- function(input, output) {
     # output results table rendering
     output$plotout <- DT::renderDataTable ({
       
-        # sets up the dataframe for our model training with only the necessary variables
+        # sets up the dataframe for our input values
         new_df = data.frame(living_area=input$living_area, 
                             land_value= input$land_value, 
                             bathrooms=input$bathrooms,
