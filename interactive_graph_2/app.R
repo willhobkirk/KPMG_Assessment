@@ -123,7 +123,7 @@ server <- function(input, output) {
     # creates our key plot
     output$plotout2 <- renderPlot({
       
-      # initialises the dataset dataframe in the new control structure
+      # dataframe of input variable values
       new_df = data.frame(living_area=input$living_area, 
                           land_value= input$land_value, 
                           bathrooms=input$bathrooms,
